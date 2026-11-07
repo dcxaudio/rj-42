@@ -29,7 +29,8 @@ window.RJ = window.RJ || {};
 
   const COLS = 40;
   const SLOTS = 8;
-  const STORE_KEY = "autosave42";
+  const STORE_KEY = "autosave";        // no store do host: "studio/rj42/autosave"
+  const SEND_TO = { sp: "rj2000", s950: "rj950" };   // botao -> id no host
   const AUDIO_RE = /\.(wav|wave|aif|aiff|aifc|mp3|ogg|oga|flac|m4a|aac|opus)$/i;
   const MIN_BPM = 40, MAX_BPM = 250;
   const MODES = ["vari", "stretch", "off"];
@@ -330,9 +331,10 @@ window.RJ = window.RJ || {};
   /* ============================================================ aparelho */
 
   class R42 {
-    constructor(app) {
-      this.app = app;
-      this.engine = app.engine;
+    /** host: a vista do host (js/host.js), nunca o app do SP. */
+    constructor(host) {
+      this.host = host;
+      this.engine = host.engine;
       this.st = newState();
       this.on = false;
       this.loaded = false;
@@ -365,7 +367,7 @@ window.RJ = window.RJ || {};
       const press = (el, down, up) => {
         el.addEventListener("pointerdown", e => {
           e.preventDefault();
-          if (!this.app.on) return;
+          if (!this.host.on) return;
           try { el.setPointerCapture(e.pointerId); } catch (_) {}
           el.classList.add("down");
           down(e);
@@ -376,7 +378,7 @@ window.RJ = window.RJ || {};
         el.addEventListener("contextmenu", e => e.preventDefault());
       };
       const learn = (id, el, name, down, kind = "button", h = {}) =>
-        this.app.learn.add(id, el, name, kind, Object.assign({ down: () => { if (this.app.on) down(); } }, h));
+        this.host.learn.add(id, el, name, kind, Object.assign({ down: () => { if (this.host.on) down(); } }, h));
       const KEY_NAMES = { "nudge-": "Nudge -", "nudge+": "Nudge +", tap: "Tap Tempo", setin: "Set In", play: "Play Loop", store: "Store" };
 
       $$("[data-r42key]", root).forEach(b => {
@@ -393,8 +395,11 @@ window.RJ = window.RJ || {};
         press(b, () => this.setBars(n));
         learn("r42bars:" + n, b, "42 " + n + " Bar" + (n > 1 ? "s" : ""), () => this.setBars(n));
       });
+      const can = this.host.targets().map(t => t.id);
       $$("[data-r42send]", root).forEach(b => {
         const k = b.dataset.r42send;
+        // sem o aparelho na pagina (pagina solo), o botao fica apagado
+        if (SEND_TO[k] && !can.includes(SEND_TO[k])) { b.disabled = true; b.parentNode.style.opacity = "0.35"; }
         press(b, () => this.send(k));
         learn("r42send:" + k, b, "42 Send " + { sp: "RJ-2000", s950: "RJ-950", disk: "Disk" }[k], () => this.send(k));
       });
@@ -420,7 +425,7 @@ window.RJ = window.RJ || {};
 
       // clicar na forma de onda poe o inicio do loop ali
       this.el.l2.addEventListener("pointerdown", e => {
-        if (!this.on || !this.song || this.app.learn.learning) return;
+        if (!this.on || !this.song || this.host.learn.learning) return;
         const r = this.el.l2.getBoundingClientRect();
         const c = clamp(Math.floor((e.clientX - r.left) / r.width * COLS), 0, COLS - 1);
         const w = this.view();
@@ -458,7 +463,7 @@ window.RJ = window.RJ || {};
     bindKnob(el, get, set, id, name) {
       const draw = () => { el.querySelector("i").style.transform = `rotate(${-135 + get() * 270}deg)`; };
       el.rjDraw = draw;
-      if (id) this.app.learn.add(id, el, name, "value", { get, set: v => { if (this.app.on && this.on) { set(v); draw(); } } });
+      if (id) this.host.learn.add(id, el, name, "value", { get, set: v => { if (this.host.on && this.on) { set(v); draw(); } } });
       let y0 = 0, v0 = 0;
       el.addEventListener("pointerdown", e => { e.preventDefault(); if (!this.on) return; el.setPointerCapture(e.pointerId); y0 = e.clientY; v0 = get(); el.dataset.drag = "1"; });
       el.addEventListener("pointermove", e => { if (!el.dataset.drag) return; set(clamp(v0 + (y0 - e.clientY) / 160, 0, 1)); draw(); });
@@ -483,8 +488,8 @@ window.RJ = window.RJ || {};
         fn(dir, Math.round(speed));
         if (ind && pointer) this.drawTarget();
       };
-      this.app.learn.add(id, el, name, "encoder", {
-        step: d => { if (!this.app.on) return; for (let i = 0; i < Math.min(Math.abs(d), 24); i++) step(Math.sign(d)); },
+      this.host.learn.add(id, el, name, "encoder", {
+        step: d => { if (!this.host.on) return; for (let i = 0; i < Math.min(Math.abs(d), 24); i++) step(Math.sign(d)); },
       });
       el.addEventListener("pointerdown", e => { e.preventDefault(); if (!this.on) return; el.setPointerCapture(e.pointerId); y = e.clientY; acc = 0; el.dataset.drag = "1"; });
       el.addEventListener("pointermove", e => {
@@ -515,7 +520,7 @@ window.RJ = window.RJ || {};
     /* ------------------------------------------------------- liga/desliga */
 
     async boot() {
-      if (this.on || !this.app.on) return;
+      if (this.on || !this.host.on) return;
       this.on = true;
       this.el.root.classList.add("on");
       this.applyOut();
@@ -523,7 +528,7 @@ window.RJ = window.RJ || {};
       if (!this.loaded) {
         this.loaded = true;
         try {
-          const saved = await RJ.store.get(STORE_KEY);
+          const saved = await this.host.store.get(STORE_KEY);
           if (saved) this.st = this.deserialize(saved);
         } catch (e) { console.warn("Memoria do RJ-42 de outra versao", e); }
         $$(".knob", this.el.root).forEach(k => k.rjDraw && k.rjDraw());
@@ -550,7 +555,7 @@ window.RJ = window.RJ || {};
       if (!this.outNode || this.outNode.context !== ctx) {
         this.outNode = ctx.createGain();
         this.outNode.gain.value = 0;
-        this.outNode.connect(this.engine.graph.limiter);
+        this.outNode.connect(this.host.output());
         this.applyOut();
       }
       return this.outNode;
@@ -970,14 +975,13 @@ window.RJ = window.RJ || {};
       if (!x) { this.flash("NOTHING TO SEND", "DROP A SONG OR CHOOSE A STORED LOOP"); return; }
       this.blinkSend(k);
       if (k === "sp") {
-        // o SP pede o pad e depois pergunta do 45 RPM, como no SAMPLE 8
-        const app = this.app, f = this.wavFile(x);
-        app.openPage(app.selectSound("Loop To Pad", s => { app.exitPage(true); app.loadAudioFiles([f], s); }, "Hit a Pad"), "sample");
+        // o SP pede o pad e depois pergunta do 45 RPM, como no SAMPLE 8 (Loop To Pad, pelo host)
+        if (this.host.send("rj2000", this.wavFile(x)) === "missing") { this.flash("NO RJ-2000 IN THIS RACK", "USE DISK"); return; }
         this.flash("SEND " + x.name + " TO THE RJ-2000", "HIT A PAD ON THE RJ-2000", 3000);
       } else if (k === "s950") {
-        const s9 = this.app.s950;
-        if (!s9.on) { this.flash("RJ-950 IS OFF", "TURN IT ON FIRST"); return; }
-        s9.loadFile(this.wavFile(x));
+        const r = this.host.send("rj950", this.wavFile(x));
+        if (r === "missing") { this.flash("NO RJ-950 IN THIS RACK", "USE DISK"); return; }
+        if (r === "off") { this.flash("RJ-950 IS OFF", "TURN IT ON FIRST"); return; }
         this.flash("SENT " + x.name + " TO THE RJ-950", "LOOK AT THE RJ-950 DISPLAY", 2500);
       } else if (k === "disk") {
         this.prompt = { kind: "disk", fmt: "wav" };
@@ -1022,7 +1026,7 @@ window.RJ = window.RJ || {};
     saveNow() {
       clearTimeout(this.saveT);
       if (!this.loaded) return;
-      try { RJ.store.put(STORE_KEY, this.serialize()); } catch (e) { console.warn(e); }
+      try { this.host.store.put(STORE_KEY, this.serialize()); } catch (e) { console.warn(e); }
     }
 
     serialize() {
