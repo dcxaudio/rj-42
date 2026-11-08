@@ -331,7 +331,7 @@ window.RJ = window.RJ || {};
   /* ============================================================ aparelho */
 
   class R42 {
-    /** host: a vista do host (js/host.js), nunca o app do SP. */
+    /** host: a vista do host (core/js/host.js), nunca o app do SP. */
     constructor(host) {
       this.host = host;
       this.engine = host.engine;
