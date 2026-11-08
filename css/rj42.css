@@ -1,0 +1,205 @@
+/* RJ-42 - painel do looper de rack (inspirado no Lexicon PCM42)
+ * Carregar depois de vendor/dcx-core/css/base.css.
+ * O 42 usa o mesmo painel do RJ-950 (botoes, legendas, LCD, drive, jacks):
+ * a primeira parte sao as regras .r9-* que ele usa, copiadas do rj950.css.
+ */
+
+/* ---------------------------------------------------------------- painel de rack (do RJ-950) */
+.r9-cap { font-size: 9px; text-transform: uppercase; letter-spacing: .08em; color: var(--rack-ink); text-align: center; line-height: 1.15; }
+.r9-maker { font-weight: 700; font-size: 28px; letter-spacing: .02em; color: var(--rack-ink); line-height: 1; transform: scaleY(1.1); transform-origin: left bottom; }
+.r9-sub { font-size: 9px; letter-spacing: .28em; text-transform: uppercase; color: var(--rack-ink); }
+.r9-model {
+  font-weight: 700; font-size: 30px; line-height: 1; letter-spacing: .06em;
+  color: transparent; -webkit-text-stroke: 1.2px var(--rack-ink);
+}
+.r9-power {
+  width: 42px; height: 34px; padding: 0; border: 0; border-radius: 2px;
+  background: linear-gradient(#dcdedb, #a7a9a5);
+  box-shadow: 0 3px 0 #686a66, 0 5px 8px rgba(0,0,0,.5);
+  touch-action: manipulation;
+}
+.rack.on .r9-power { transform: translateY(2px); box-shadow: 0 1px 0 #686a66, 0 2px 4px rgba(0,0,0,.5); }
+.r9-drive {
+  display: flex; flex-direction: column; justify-content: center; gap: 9px;
+  width: 100%; height: 58px; padding: 0 14px;
+  background: linear-gradient(#1b1c1d, #0f1011); border: 1px solid #000; border-radius: 3px;
+  box-shadow: inset 0 1px 0 #303234, 0 1px 0 #2f3133;
+  transition: box-shadow .12s, outline-color .12s; outline: 2px solid transparent;
+}
+.r9-drive.drop { outline-color: var(--rule); box-shadow: 0 0 16px 2px rgba(75, 138, 208, .7); }
+.r9-slot { display: block; height: 6px; border-radius: 3px; background: #020202; box-shadow: inset 0 1px 2px #000, 0 1px 0 #2d2e2f; }
+.r9-drive-row { display: flex; justify-content: space-between; align-items: center; }
+.r9-busy { width: 9px; height: 4px; border-radius: 1px; background: #1f3a22; }
+.r9-busy.on { background: #59ff76; box-shadow: 0 0 6px 1px rgba(89, 255, 118, .7); }
+.r9-eject { width: 22px; height: 8px; border-radius: 2px; background: linear-gradient(#3a3b3d, #232425); box-shadow: 0 1px 0 #000; }
+.r9-bezel { flex: 1; min-width: 0; padding: 7px 9px; }
+.r9-lcd {
+  --r9a: .72;
+  font-size: 18px; padding: 5px 7px;
+  color: rgba(38, 48, 15, var(--r9a));
+}
+.r9-lcd .lcd-row { grid-template-columns: repeat(40, minmax(0, 1fr)); height: 21px; }
+.r9-lcd .lcd-row span { background: rgba(38, 48, 15, calc(var(--r9a) * .09)); }
+.r9-lcd .lcd-row span.bar::after { background: currentColor; bottom: 1px; }
+.r9-lcd .lcd-row span.dim::after { opacity: .28; }
+.r9-lcd .lcd-row span.mk-l { box-shadow: inset 2px 0 0 currentColor; }
+.r9-lcd .lcd-row span.mk-r { box-shadow: inset -2px 0 0 currentColor; }
+.r9-lcd .lcd-row span.mk-l.mk-r { box-shadow: inset 2px 0 0 currentColor, inset -2px 0 0 currentColor; }
+.r9-lcd .lcd-row span.mk-loop::before {
+  content: ""; position: absolute; top: 0; left: 50%; margin-left: -4px;
+  border: 4px solid transparent; border-top-color: currentColor;
+}
+.rack:not(.on) .r9-lcd { background: #4a5027; box-shadow: inset 0 0 16px rgba(0,0,0,.55); }
+.rack:not(.on) .r9-lcd .lcd-row span { background: transparent; }
+.r9-led { width: 7px; height: 7px; }
+.r9-btn {
+  width: 36px; height: 24px; padding: 0; border: 0; border-radius: 2px;
+  background: linear-gradient(#dfe1dd, var(--rack-btn));
+  box-shadow: 0 2px 0 var(--rack-btn-edge), 0 4px 6px rgba(0,0,0,.5);
+  touch-action: manipulation; transition: transform .04s, box-shadow .04s;
+}
+.r9-btn.down { transform: translateY(2px); box-shadow: 0 0 0 var(--rack-btn-edge), 0 1px 3px rgba(0,0,0,.5); }
+.r9-knob-s { width: 36px; height: 36px; }
+.r9-knob-s i { top: 4px; height: 11px; transform-origin: 50% 14px; }
+.r9-jack {
+  display: block; width: 26px; height: 26px; border-radius: 50%;
+  background: radial-gradient(circle, #050505 30%, #c0c2c4 34%, #7f8285 58%, #2b2c2e 63%);
+  box-shadow: 0 0 0 2px #0d0d0d;
+}
+@media (max-width: 900px) {
+  .r9-model { font-size: 24px; }
+  .r9-bezel { padding: 5px 6px; }
+  .r9-lcd { font-size: clamp(10px, 3.1vw, 17px); padding: 4px; }
+  .r9-lcd .lcd-row { height: 1.25em; gap: 0; }
+}
+
+/* ---------------------------------------------------------------- RJ-42 */
+/* mesmo rack do 950; o que muda: LEDs vermelhos de 7 segmentos (como o Lexicon PCM42) e o jog */
+.r42-face {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr) 230px 160px;
+  grid-template-areas:
+    "brand leds  leds  search"
+    "drive lcd   lcd   search"
+    "pow   bars  trans tempo"
+    "pow   send  trans tempo";
+  column-gap: 26px; row-gap: 14px;
+  padding: 18px 22px 20px;
+  border-left: 1px solid #0d0d0d; border-right: 1px solid #0d0d0d;
+}
+.r42-brand { grid-area: brand; display: flex; flex-direction: column; gap: 2px; }
+.r42-model { margin-top: 8px; }
+.r42-dim { color: #8e9093; }
+.r42-leds { grid-area: leds; display: flex; gap: 14px; align-items: flex-start; min-width: 0; }
+.r42-readout { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.r42-win {
+  display: flex; gap: 3px; align-items: flex-end; padding: 8px 10px; border-radius: 3px;
+  background: #0a0505; box-shadow: inset 0 2px 6px #000, 0 1px 0 #34363a;
+}
+#r42-src { cursor: ns-resize; }
+.r42-win svg { width: 22px; height: 38px; display: block; }
+.r42-small svg { width: 16px; height: 28px; }
+.r42-seg { fill: rgba(255, 59, 38, .07); }
+.r42-seg.on { fill: #ff3b26; filter: drop-shadow(0 0 3px rgba(255, 59, 38, .6)); }
+.r42:not(.on) .r42-seg.on { fill: rgba(255, 59, 38, .07); filter: none; }
+.r42-arrow { align-self: center; margin-top: -14px; color: #8e9093; font-size: 20px; }
+.r42-modes { display: flex; flex-direction: column; gap: 7px; margin-left: auto; padding-top: 4px; }
+.r42-lr {
+  display: flex; align-items: center; gap: 7px; padding: 1px 0; border: 0; background: none;
+  font-size: 9px; text-transform: uppercase; letter-spacing: .08em; color: var(--rack-ink); text-align: left;
+}
+.r42-search { grid-area: search; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+.r42-jog {
+  width: 118px; height: 118px; border-radius: 50%; position: relative; cursor: ns-resize; touch-action: none;
+  background: radial-gradient(circle at 38% 30%, #d0d2d4, #8e9194 55%, #5b5e61);
+  box-shadow: 0 0 0 3px #0b0b0b, 0 8px 14px rgba(0,0,0,.6);
+}
+.r42-fine { margin-top: 4px; }
+.r42-jog::before {
+  content: ""; position: absolute; inset: 14px; border-radius: 50%;
+  background: repeating-conic-gradient(rgba(0,0,0,.18) 0 4deg, transparent 4deg 12deg);
+}
+.r42-jog i { position: absolute; inset: 0; border-radius: 50%; }
+.r42-jog i::after {
+  content: ""; position: absolute; width: 22px; height: 22px; border-radius: 50%; top: 14px; left: 50%; margin-left: -11px;
+  background: radial-gradient(circle at 40% 35%, #6c6f72, #2a2b2d); box-shadow: inset 0 1px 2px rgba(0,0,0,.6);
+}
+.r42-drive-wrap { grid-area: drive; display: flex; flex-direction: column; gap: 6px; align-self: center; }
+.r42-lcd-wrap { grid-area: lcd; min-width: 0; }
+.r42-lcd .lcd-row span.lp { background: rgba(38, 48, 15, calc(var(--r9a) * .26)); }
+.r42-lcd .lcd-row span.tick::before {
+  content: ""; position: absolute; top: 0; left: 50%; margin-left: -3px;
+  border: 3px solid transparent; border-top-color: currentColor;
+}
+.r42-lcd .lcd-row span.ph { box-shadow: inset 0 0 0 1px currentColor; }
+#r42-l2 { cursor: pointer; }
+.r42-lcd-caps { display: flex; justify-content: space-between; margin-top: 6px; }
+.r42-pow { grid-area: pow; display: flex; gap: 22px; align-items: flex-start; }
+.r42-pow .kc { gap: 6px; }
+.r42-group { position: relative; border: 1px solid #4c4f52; border-radius: 3px; padding: 14px 10px 10px; display: flex; gap: 12px; align-items: flex-end; }
+.r42-gt {
+  position: absolute; top: -6px; left: 10px; padding: 0 6px; background: var(--rack-face);
+  font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: #8e9093;
+}
+.r42-bk { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.r42-t {
+  min-height: 20px; display: flex; align-items: flex-end; justify-content: center; gap: 5px; text-align: center;
+  font-size: 9px; line-height: 1.1; text-transform: uppercase; letter-spacing: .05em; color: var(--rack-ink);
+}
+.r42-t .led { margin-bottom: 1px; }
+.r42-bars { grid-area: bars; display: flex; gap: 14px; align-items: stretch; flex-wrap: wrap; }
+.r42-num-btn { color: #1c1b1a; font-size: 15px; font-weight: 700; }
+.r42-slots { display: grid; grid-template-columns: repeat(8, 18px); gap: 6px 4px; justify-items: center; }
+.r42-slot { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0; border: 0; background: none; color: var(--rack-ink); font-size: 9px; }
+.r42-slot.sel span { color: #ff6a55; font-weight: 700; }
+.r42-slot.sel .led:not(.on) { box-shadow: 0 0 0 1px #ff3b26; }
+.r42-send { grid-area: send; display: flex; }
+.r42-send .r42-group { flex: 1; justify-content: space-around; }
+.r42-wide { width: 58px; }
+.r42-trans { grid-area: trans; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 8px; align-content: start; }
+.r42-red { background: linear-gradient(#e2463f, var(--key-red)); box-shadow: 0 2px 0 var(--key-red-edge), 0 4px 6px rgba(0,0,0,.5); }
+.r42-red.down { box-shadow: 0 0 0 var(--key-red-edge), 0 1px 3px rgba(0,0,0,.5); }
+.r42-tempo { grid-area: tempo; display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.r42-tempo .kc { gap: 6px; }
+.r42-k-m { width: 48px; height: 48px; cursor: ns-resize; }
+.r42-k-m i { top: 5px; height: 13px; transform-origin: 50% 19px; }
+
+@media (max-width: 1180px) {
+  .r42-face { grid-template-columns: 150px minmax(0, 1fr) 210px 140px; column-gap: 20px; }
+  .r42-win svg { width: 18px; height: 31px; }
+  .r42-small svg { width: 13px; height: 23px; }
+  .r42-jog { width: 100px; height: 100px; }
+}
+@media (max-width: 1060px) {
+  .r42-face {
+    grid-template-columns: 160px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "brand leds  leds"
+      "drive lcd   lcd"
+      "pow   bars  search"
+      "send  send  search"
+      "trans trans tempo";
+  }
+}
+@media (max-width: 900px) {
+  .r42-face {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "brand  brand"
+      "leds   leds"
+      "lcd    lcd"
+      "bars   bars"
+      "trans  search"
+      "send   send"
+      "tempo  tempo"
+      "drive  pow";
+    padding: 14px 12px 16px; column-gap: 14px; row-gap: 16px;
+  }
+  .r42-brand { flex-direction: row; align-items: baseline; gap: 12px; }
+  .r42-model { margin-top: 0; }
+  .r42-leds { flex-wrap: wrap; gap: 10px; }
+  .r42-modes { flex-direction: row; flex-wrap: wrap; margin-left: 0; width: 100%; gap: 12px; }
+  .r42-arrow { display: none; }
+  .r42-trans { gap: 10px 6px; }
+  .r42-pow { justify-content: flex-end; }
+}
