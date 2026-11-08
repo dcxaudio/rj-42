@@ -325,7 +325,7 @@ window.RJ = window.RJ || {};
   }
 
   function newState() {
-    return { format: "rj42", version: 1, target: 90, mode: "vari", bars: 4, fade: 0.25, out: 0.8, sel: -1, slots: new Array(SLOTS).fill(null) };
+    return { format: "rj42", version: 1, target: 90, mode: "vari", bars: 4, fade: 0.25, out: 0.8, tape: 0, sel: -1, slots: new Array(SLOTS).fill(null) };
   }
 
   /* ============================================================ aparelho */
@@ -422,6 +422,14 @@ window.RJ = window.RJ || {};
       this.bindEncoder(this.el.src, (d, sp) => this.turnSource(d, sp), "r42:source", "42 Source BPM", -1);
       this.bindKnob($("#r42-fade"), () => this.st.fade, v => { this.st.fade = v; this.flash(this.fadeText(), "", 900); this.dirty(); }, "r42:fade", "42 Fade");
       this.bindKnob($("#r42-out"), () => this.st.out, v => { this.st.out = v; this.applyOut(); this.dirty(); }, "r42:out", "42 Output");
+
+      // linha de cima do LCD: menu TAPE (e MIDI Learn do Drive da fita)
+      const l1 = this.el.l1;
+      l1.addEventListener("pointerdown", e => { if (this.on && !this.host.learn.learning) { e.preventDefault(); this.openTape(); } });
+      l1.addEventListener("wheel", e => { if (!this.on || this.host.learn.learning) return; e.preventDefault(); this.turnTape(-Math.sign(e.deltaY), 1); }, { passive: false });
+      this.host.learn.add("r42:tape", l1, "42 Tape Drive", "value", {
+        get: () => this.st.tape, set: v => { if (this.host.on && this.on) this.setTape(Math.round(v * 100) / 100); },
+      });
 
       // clicar na forma de onda poe o inicio do loop ali
       this.el.l2.addEventListener("pointerdown", e => {
@@ -531,6 +539,7 @@ window.RJ = window.RJ || {};
           const saved = await this.host.store.get(STORE_KEY);
           if (saved) this.st = this.deserialize(saved);
         } catch (e) { console.warn("Memoria do RJ-42 de outra versao", e); }
+        if (this.tape) this.tape.setDrive(this.st.tape);
         $$(".knob", this.el.root).forEach(k => k.rjDraw && k.rjDraw());
       }
       await wait(500);
@@ -543,6 +552,7 @@ window.RJ = window.RJ || {};
       this.saveNow();
       this.on = false;
       this.prompt = null;
+      this.menu = null;
       this.el.root.classList.remove("on");
       this.applyOut();
       this.renderAll();
@@ -555,7 +565,11 @@ window.RJ = window.RJ || {};
       if (!this.outNode || this.outNode.context !== ctx) {
         this.outNode = ctx.createGain();
         this.outNode.gain.value = 0;
-        this.outNode.connect(this.host.output());
+        // fita (RJ.Tape) entre o Output e a saida do host; Drive 0 = som igual
+        if (this.tape) this.tape.disconnect();
+        this.tape = RJ.Tape ? new RJ.Tape(ctx, { drive: this.st.tape }) : null;
+        if (this.tape) { this.outNode.connect(this.tape.input); this.tape.output.connect(this.host.output()); }
+        else this.outNode.connect(this.host.output());
         this.applyOut();
       }
       return this.outNode;
@@ -694,6 +708,7 @@ window.RJ = window.RJ || {};
 
     key(k) {
       if (!this.on) return;
+      if (this.menu) this.openTape(false);
       if (k !== "setin" && this.prompt && k !== "nudge-" && k !== "nudge+") this.prompt = null;
       if (this.prompt && (k === "nudge-" || k === "nudge+")) { this.prompt.fmt = this.prompt.fmt === "wav" ? "mp3" : "wav"; this.flashUntil = 0; this.renderLCD(); return; }
       if (k === "tap") return this.tap();
@@ -763,6 +778,7 @@ window.RJ = window.RJ || {};
     }
 
     search(dir, sp) {
+      if (this.menu === "tape") { this.turnTape(dir, sp); return; }
       if (!this.song) return;
       // passos de 2 ms, acelerando ate ~1 s por passo; no Fine, 1 ms sempre
       const step = this.fine ? Math.round(this.song.rate * 0.001) : Math.round(this.song.rate * 0.002 * Math.min(sp, 400));
@@ -791,6 +807,35 @@ window.RJ = window.RJ || {};
       // a mao, o tempo fica fixo (sem seguir as batidas) ate o proximo Tap
       this.manual = clamp(Math.round(((this.manual || this.src) + dir * d) * 10) / 10, MIN_BPM, MAX_BPM);
       this.changed();
+    }
+
+    /* Menu TAPE no LCD: clicar na linha de cima abre; o Search (ou a roda do
+     * mouse na linha) muda o Drive; clicar de novo, outra tecla ou 6 s parado fecham. */
+    openTape(open = this.menu !== "tape") {
+      if (!this.on) return;
+      clearTimeout(this.menuT);
+      this.menu = open ? "tape" : null;
+      if (open) this.menuT = setTimeout(() => this.openTape(false), 6000);
+      this.flashUntil = 0;
+      this.renderLCD();
+    }
+
+    turnTape(dir, sp) {
+      const step = sp > 6 ? 0.05 : 0.01;
+      this.setTape(Math.round((this.st.tape + dir * step) * 100) / 100);
+    }
+
+    setTape(v) {
+      this.st.tape = clamp(v, 0, 1);
+      if (this.tape) this.tape.setDrive(this.st.tape);
+      if (this.menu === "tape") { clearTimeout(this.menuT); this.menuT = setTimeout(() => this.openTape(false), 6000); this.renderLCD(); }
+      else this.flash(this.tapeText(), "CLICK THE TOP LINE FOR THE TAPE MENU", 900);
+      this.dirty();
+    }
+
+    tapeText() {
+      const v = Math.round(this.st.tape * 100);
+      return "TAPE DRIVE " + (v ? String(v).padStart(3) + "%" : " OFF") + "  [" + "#".repeat(Math.round(v / 10)).padEnd(10, ".") + "]";
     }
 
     fadeText() { return "FADE " + Math.round(this.st.fade * 40) + " MS AT EACH END"; }
@@ -1044,11 +1089,12 @@ window.RJ = window.RJ || {};
       const d = typeof json === "string" ? JSON.parse(json) : json;
       if (!d || d.format !== "rj42") throw new Error("Nao e uma memoria do RJ-42");
       const st = newState();
-      ["target", "targetSet", "bars", "fade", "out", "sel"].forEach(k => { if (d[k] !== undefined) st[k] = d[k]; });
+      ["target", "targetSet", "bars", "fade", "out", "tape", "sel"].forEach(k => { if (d[k] !== undefined) st[k] = d[k]; });
       if (MODES.includes(d.mode)) st.mode = d.mode;
       if (![1, 2, 4, 8].includes(st.bars)) st.bars = 4;
       st.target = clamp(+st.target || 90, 60, 180);
       st.sel = clamp(st.sel | 0, -1, SLOTS - 1);
+      st.tape = clamp(+st.tape || 0, 0, 1);
       st.slots = new Array(SLOTS).fill(null).map((_, i) => {
         const x = d.slots && d.slots[i];
         if (!x || !x.pcm) return null;
@@ -1108,6 +1154,10 @@ window.RJ = window.RJ || {};
       if (!this.on) { this.lcd(["", ""]); return; }
       if (performance.now() < this.flashUntil) return;
       const st = this.st;
+      if (this.menu === "tape") {
+        this.lcd([this.tapeText(), "SEARCH = DRIVE    CLICK HERE = EXIT"]);
+        return;
+      }
       if (this.prompt) {
         const x = st.slots[st.sel] || null, f = this.prompt.fmt;
         this.lcd(["SAVE " + (x ? "LOOP " + pad2(st.sel + 1) + " " + x.name : "MARKED LOOP") + " TO DISK",

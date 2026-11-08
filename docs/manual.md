@@ -36,6 +36,7 @@ Um aparelho que não existiu na época: tira loops de 1, 2, 4 ou 8 compassos de 
 - **Disk:** o LCD pergunta o formato; Nudge troca entre WAV e MP3, Disk de novo salva. O MP3 (192 kbps) precisa de internet na primeira vez, para baixar o codificador.
 - Sem memória escolhida, o Send manda o loop marcado na hora.
 - **Fade:** um fade curto nas duas pontas do loop (0 a 40 ms), para não estalar quando ele repete. **Output:** volume do RJ-42.
+- **Tape (fita):** clique na linha de cima do LCD para abrir o menu TAPE e gire o Search para mudar o Drive (0 a 100%). A roda do mouse sobre essa linha também muda o Drive. Com o Drive em OFF, o som sai igual. Subindo, os picos e os agudos são comprimidos como numa fita, e entra um wow bem leve. Para aprender MIDI, clique nessa linha no Learn ("42 Tape Drive").
 
 ## Bom saber
 

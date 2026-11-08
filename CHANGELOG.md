@@ -1,5 +1,9 @@
 # Changelog
 
+## Próxima
+
+- Saturação de fita (`js/tape.js`, `RJ.Tape`) entre o Output e a saída: tanh com ADAA de 1ª ordem, pré e de-ênfase, perda de agudos e wow/flutter leve, num AudioWorklet. O Drive fica no menu TAPE do LCD (clique na linha de cima e gire o Search), salva com o resto e aprende MIDI. O padrão é OFF, e com ele o som sai igual, bit a bit.
+
 ## b0.1 (beta)
 
 - O RJ-42 ganha repositório e página próprios. O histórico de `js/r42.js` vem do [RJ-2000](https://github.com/dcxaudio/rj-2000), onde ele nasceu como o looper embaixo do RJ-950.
