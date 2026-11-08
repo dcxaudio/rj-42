@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>RJ-42 Looper</title>
+  <meta name="description" content="RJ-42: looper de rack no navegador. Tira loops de uma musica no BPM que voce quer. Projeto open source da DCX Audio.">
+  <meta name="theme-color" content="#1c1c1c">
+  <link rel="stylesheet" href="vendor/dcx-core/css/base.css">
+  <link rel="stylesheet" href="vendor/dcx-core/css/solo.css">
+  <link rel="stylesheet" href="css/rj42.css">
+</head>
+<body>
+  <div class="power" id="power">
+    <button class="power-btn" id="power-btn" type="button">
+      <span class="power-ring"></span>
+      <span class="power-label">LIGAR</span>
+    </button>
+    <p class="power-hint">RJ-42 &middot; DCX Audio<br>Toque para ligar o som</p>
+  </div>
+
+  <main class="solo">
+    <div class="solo-top">
+      <h1 class="solo-title">RJ-42 &middot; DCX Audio</h1>
+      <div id="learnbar"></div>
+    </div>
+
+    <section class="rack r42" id="r42" aria-label="RJ-42 Loop Phrase Recorder">
+      <div class="rack-ear"><i></i><i></i></div>
+      <div class="r42-face">
+        <div class="r42-brand">
+          <span class="r9-maker">DCX</span>
+          <span class="r9-sub">Loop Phrase Recorder</span>
+          <span class="r9-model r42-model">RJ-42</span>
+        </div>
+
+        <div class="r42-leds">
+          <div class="r42-readout"><div class="r42-win" id="r42-src" role="slider" tabindex="0" aria-label="Source BPM (arraste ou role para ajustar)"></div><span class="r9-cap">Source BPM</span></div>
+          <div class="r42-arrow" aria-hidden="true">&#9654;</div>
+          <div class="r42-readout"><div class="r42-win" id="r42-tgt" aria-label="Target BPM"></div><span class="r9-cap">Target BPM</span></div>
+          <div class="r42-readout"><div class="r42-win r42-small" id="r42-pos" aria-label="Compasso e tempo do inicio do loop"></div><span class="r9-cap">Bar . Beat</span></div>
+          <div class="r42-readout"><div class="r42-win r42-small" id="r42-num" aria-label="Loop escolhido"></div><span class="r9-cap">Loop</span></div>
+          <div class="r42-modes" id="r42-modes">
+            <button class="r42-lr" data-r42mode="vari" type="button"><i class="led r9-led"></i>Vari-Speed</button>
+            <button class="r42-lr" data-r42mode="stretch" type="button"><i class="led r9-led"></i>Stretch</button>
+            <button class="r42-lr" data-r42mode="off" type="button"><i class="led r9-led"></i>Off (Source)</button>
+          </div>
+        </div>
+
+        <div class="r42-search">
+          <div class="r42-jog" id="r42-jog" role="slider" tabindex="0" aria-label="Search: anda o inicio do loop"><i></i></div>
+          <span class="r9-cap">Search</span>
+          <div class="r42-bk r42-fine"><span class="r42-t"><i class="led r9-led" id="r42-fine-led"></i>Fine</span><button class="r9-btn" data-r42fine aria-label="Fine: o Search anda 1 ms por passo e o LCD da zoom no inicio"></button></div>
+        </div>
+
+        <div class="r42-drive-wrap">
+          <span class="r9-cap">Floppy Disk Drive</span>
+          <button class="r9-drive" id="r42-drive" type="button" aria-label="Disquete: carregar uma musica (clique ou solte o arquivo aqui)">
+            <span class="r9-slot"></span>
+            <span class="r9-drive-row"><i class="r9-busy" id="r42-busy"></i><span class="r9-eject"></span></span>
+          </button>
+          <span class="r9-cap r42-dim">Song In</span>
+        </div>
+
+        <div class="r42-lcd-wrap">
+          <div class="lcd-bezel r9-bezel">
+            <div class="lcd r9-lcd r42-lcd" id="r42-lcd" aria-live="polite">
+              <div class="lcd-row" id="r42-l1"></div>
+              <div class="lcd-row" id="r42-l2"></div>
+            </div>
+          </div>
+          <div class="r42-lcd-caps"><span class="r9-cap r42-dim">&#9664; Earlier</span><span class="r9-cap r42-dim">&#9660; = Bar &middot; Click to set In</span><span class="r9-cap r42-dim">Later &#9654;</span></div>
+        </div>
+
+        <div class="r42-pow">
+          <div class="kc"><button class="r9-power" id="r42-power" aria-label="Power do RJ-42"></button><span class="r9-cap">Power</span></div>
+          <div class="kc" aria-hidden="true"><i class="r9-jack"></i><span class="r9-cap">Input</span></div>
+          <div class="kc" aria-hidden="true"><i class="r9-jack"></i><span class="r9-cap">Foot<br>Tap</span></div>
+        </div>
+
+        <div class="r42-bars">
+          <div class="r42-group"><span class="r42-gt">Loop Length (Bars)</span>
+            <div class="r42-bk"><i class="led r9-led" data-r42barled="1"></i><button class="r9-btn r42-num-btn" data-r42bars="1" aria-label="1 compasso">1</button></div>
+            <div class="r42-bk"><i class="led r9-led" data-r42barled="2"></i><button class="r9-btn r42-num-btn" data-r42bars="2" aria-label="2 compassos">2</button></div>
+            <div class="r42-bk"><i class="led r9-led" data-r42barled="4"></i><button class="r9-btn r42-num-btn" data-r42bars="4" aria-label="4 compassos">4</button></div>
+            <div class="r42-bk"><i class="led r9-led" data-r42barled="8"></i><button class="r9-btn r42-num-btn" data-r42bars="8" aria-label="8 compassos">8</button></div>
+          </div>
+          <div class="r42-group"><span class="r42-gt">Loop Memory</span>
+            <div class="r42-slots" id="r42-slots"></div>
+          </div>
+        </div>
+
+        <div class="r42-send">
+          <div class="r42-group"><span class="r42-gt">Send Loop</span>
+            <div class="r42-bk"><i class="led r9-led" data-r42sendled="sp"></i><button class="r9-btn r42-wide" data-r42send="sp" aria-label="Mandar o loop para um pad do RJ-2000"></button><span class="r9-cap">To<br>RJ-2000</span></div>
+            <div class="r42-bk"><i class="led r9-led" data-r42sendled="s950"></i><button class="r9-btn r42-wide" data-r42send="s950" aria-label="Mandar o loop para o RJ-950"></button><span class="r9-cap">To<br>RJ-950</span></div>
+            <div class="r42-bk"><i class="led r9-led" data-r42sendled="disk"></i><button class="r9-btn r42-wide" data-r42send="disk" aria-label="Salvar o loop em arquivo WAV ou MP3"></button><span class="r9-cap">Disk<br>WAV / MP3</span></div>
+          </div>
+        </div>
+
+        <div class="r42-trans">
+          <div class="r42-bk"><span class="r42-t">Nudge &minus;</span><button class="r9-btn" data-r42key="nudge-" aria-label="Nudge: inicio um tempo antes"></button></div>
+          <div class="r42-bk"><span class="r42-t">Nudge +</span><button class="r9-btn" data-r42key="nudge+" aria-label="Nudge: inicio um tempo depois"></button></div>
+          <div class="r42-bk"><span class="r42-t">Tap<br>Tempo</span><button class="r9-btn" data-r42key="tap" aria-label="Tap Tempo"></button></div>
+          <div class="r42-bk"><span class="r42-t">Set In<br>(Downbeat)</span><button class="r9-btn" data-r42key="setin" aria-label="Set In: marca o tempo forte onde o loop comeca"></button></div>
+          <div class="r42-bk"><span class="r42-t"><i class="led r9-led" id="r42-play-led"></i>Play<br>Loop</span><button class="r9-btn" data-r42key="play" aria-label="Play: toca o loop marcado"></button></div>
+          <div class="r42-bk"><span class="r42-t">Store</span><button class="r9-btn r42-red" data-r42key="store" aria-label="Store: guarda o loop na memoria"></button></div>
+        </div>
+
+        <div class="r42-tempo">
+          <div class="kc"><div class="knob r42-k-m" id="r42-target" role="slider" tabindex="0" aria-label="Target Tempo"><i></i></div><span class="r9-cap">Target<br>Tempo</span></div>
+          <div class="kc"><div class="knob r9-knob-s" id="r42-fade" role="slider" tabindex="0" aria-label="Fade"><i></i></div><span class="r9-cap">Fade</span></div>
+          <div class="kc"><div class="knob r9-knob-s" id="r42-out" role="slider" tabindex="0" aria-label="Output"><i></i></div><span class="r9-cap">Output</span></div>
+        </div>
+      </div>
+      <div class="rack-ear"><i></i><i></i></div>
+    </section>
+
+    <p class="solo-help">Solte uma música no disquete. Ajuste o BPM de destino e os compassos, toque Play e salve o loop no Disk (WAV ou MP3). Os envios para o RJ-2000 e o RJ-950 ficam no DCX Studio.</p>
+    <p class="credit">
+      RJ-42 <span id="version">b0.1</span> &middot; open source (GPL-3.0) &middot; inspirado no Lexicon PCM42 e no JamMan &middot;
+      <a href="https://github.com/dcxaudio/rj-42/blob/main/docs/manual.md" target="_blank" rel="noopener">manual</a>
+    </p>
+  </main>
+
+  <input type="file" id="r42-file" hidden>
+
+  <!-- dcx-core (submodulo em vendor/dcx-core) -->
+  <script src="vendor/dcx-core/js/dsp.js"></script>
+  <script src="vendor/dcx-core/js/decode.js"></script>
+  <script src="vendor/dcx-core/js/store.js"></script>
+  <script src="vendor/dcx-core/js/output.js"></script>
+  <script src="vendor/dcx-core/js/midi.js"></script>
+  <script src="vendor/dcx-core/js/midimap.js"></script>
+  <script src="vendor/dcx-core/js/host.js"></script>
+  <script src="vendor/dcx-core/js/learnbar.js"></script>
+  <!-- o aparelho -->
+  <script src="js/r42.js"></script>
+  <script src="js/solo.js"></script>
+</body>
+</html>

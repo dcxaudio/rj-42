@@ -1,0 +1,8 @@
+# Changelog
+
+## b0.1 (beta)
+
+- O RJ-42 ganha repositório e página próprios. O histórico de `js/r42.js` vem do [RJ-2000](https://github.com/dcxaudio/rj-2000), onde ele nasceu como o looper embaixo do RJ-950.
+- Página solo com o host do [dcx-core](https://github.com/dcxaudio/dcx-core) v1.0.0 (submódulo em `vendor/dcx-core`). Os dados ficam no navegador com o prefixo `rj42/`.
+- Sozinho, To RJ-2000 e To RJ-950 ficam apagados. O Disk (WAV ou MP3) continua.
+- Botão **MIDI Learn** na página, para aprender sem o SET-UP 22 do RJ-2000.
