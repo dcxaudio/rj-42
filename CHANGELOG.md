@@ -2,7 +2,7 @@
 
 ## Próxima
 
-- Saturação de fita (`js/tape.js`, `RJ.Tape`) entre o Output e a saída: tanh com ADAA de 1ª ordem, pré e de-ênfase, perda de agudos e wow/flutter leve, num AudioWorklet. O Drive fica no menu TAPE do LCD (clique na linha de cima e gire o Search), salva com o resto e aprende MIDI. O padrão é OFF, e com ele o som sai igual, bit a bit.
+- Saturação de fita (`RJ.Tape`, que mora no dcx-core v1.1.0: `vendor/dcx-core/js/tape.js`) entre o Output e a saída: tanh com ADAA de 1ª ordem, pré e de-ênfase, perda de agudos e wow/flutter leve, num AudioWorklet. O Drive fica no menu TAPE do LCD (clique na linha de cima e gire o Search), salva com o resto e aprende MIDI. O padrão é OFF, e com ele o som sai igual, bit a bit.
 
 ## b0.1 (beta)
 

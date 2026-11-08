@@ -28,7 +28,7 @@ Depois abra `http://localhost:8000`. Não tem build nem dependências.
 index.html            página solo (host do dcx-core com só o 42)
 js/solo.js            monta a página: host, tela de ligar, MIDI Learn
 js/r42.js             o aparelho: detecção de BPM, batidas, time stretch, memórias e envio
-js/tape.js            saturação de fita (RJ.Tape, AudioWorklet), genérica para ir ao dcx-core
+(RJ.Tape, a saturação de fita, vem do dcx-core: vendor/dcx-core/js/tape.js)
 css/rj42.css          o painel
 docs/manual.md        manual
 vendor/dcx-core/      submódulo (v1.0.0)
