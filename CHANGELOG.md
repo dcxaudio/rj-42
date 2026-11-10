@@ -3,6 +3,7 @@
 ## Próxima
 
 - Saturação de fita (`RJ.Tape`, que mora no dcx-core v1.1.0: `vendor/dcx-core/js/tape.js`) entre o Output e a saída: tanh com ADAA de 1ª ordem, pré e de-ênfase, perda de agudos e wow/flutter leve, num AudioWorklet. O Drive fica no menu TAPE do LCD (clique na linha de cima e gire o Search), salva com o resto e aprende MIDI. O padrão é OFF, e com ele o som sai igual, bit a bit.
+- As regras `.r9-*` do `css/rj42.css` ficam escopadas em `:where(.r42)` (mesma especificidade, o 42 não muda): no DCX Studio elas não vazam mais para o painel do RJ-950 (`#r9`).
 
 ## b0.1 (beta)
 
