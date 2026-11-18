@@ -533,18 +533,45 @@ window.RJ = window.RJ || {};
       this.el.root.classList.add("on");
       this.applyOut();
       this.lcd(["RJ-42  LOOP PHRASE RECORDER", "LOADING..."]);
-      if (!this.loaded) {
-        this.loaded = true;
-        try {
-          const saved = await this.host.store.get(STORE_KEY);
-          if (saved) this.st = this.deserialize(saved);
-        } catch (e) { console.warn("Memoria do RJ-42 de outra versao", e); }
+      let warn = null;
+      if (!this.loaded && !this.loading) {
+        this.loading = true;
+        try { warn = await this.restore(); } finally { this.loading = false; }
         if (this.tape) this.tape.setDrive(this.st.tape);
         $$(".knob", this.el.root).forEach(k => k.rjDraw && k.rjDraw());
       }
       await wait(500);
       if (!this.on) return;
       this.renderAll();
+      if (warn) this.flash(warn[0], warn[1], 4000);
+    }
+
+    /**
+     * Le a memoria salva. So libera o salvamento (loaded) quando a leitura deu
+     * certo, para nao gravar um 42 vazio por cima do que estava salvo (P0-05).
+     * Devolve o aviso do visor, ou null.
+     */
+    async restore() {
+      const store = this.host.store;
+      let saved;
+      try {
+        // getStrict (dcx-core novo) separa erro de "nao existe"; o get antigo devolve null nos dois
+        saved = store.getStrict ? await store.getStrict(STORE_KEY) : await store.get(STORE_KEY);
+      } catch (e) {
+        console.warn("Nao foi possivel ler a memoria do RJ-42", e);
+        return ["MEMORY READ ERROR", "CHANGES WILL NOT BE KEPT - SAVE TO DISK"];
+      }
+      if (saved == null) { this.loaded = true; return null; }
+      const bad = [];
+      try { this.st = this.deserialize(saved, bad); }
+      catch (e) { console.warn("Memoria do RJ-42 ilegivel ou de outra versao", e); bad.length = 0; bad.push(-1); }
+      if (!bad.length) { this.loaded = true; return null; }
+      // guarda o bruto antes de deixar o salvamento gravar por cima
+      let kept = false;
+      try { kept = (await store.put(STORE_KEY + "-bad", saved)) !== false; } catch (e) { console.warn(e); }
+      if (kept) this.loaded = true;
+      const what = bad[0] === -1 ? "MEMORY UNREADABLE" : "LOOP " + bad.map(i => pad2(i + 1)).join(" ") + " UNREADABLE";
+      return [what, kept ? "OLD MEMORY KEPT AS BACKUP" : "CHANGES WILL NOT BE KEPT - SAVE TO DISK"];
     }
 
     powerOff() {
@@ -1071,7 +1098,19 @@ window.RJ = window.RJ || {};
     saveNow() {
       clearTimeout(this.saveT);
       if (!this.loaded) return;
-      try { this.host.store.put(STORE_KEY, this.serialize()); } catch (e) { console.warn(e); }
+      let p;
+      try { p = this.host.store.put(STORE_KEY, this.serialize()); } catch (e) { console.warn(e); this.saveFailed(); return; }
+      // put devolve false (ou rejeita, conforme o dcx-core) quando o navegador nao guardou (P0-06)
+      Promise.resolve(p).then(ok => { if (ok === false) this.saveFailed(); else this.saveWarned = false; },
+        e => { console.warn(e); this.saveFailed(); });
+    }
+
+    /** Avisa uma vez por sequencia de falhas, sem tapar outra mensagem em curso. */
+    saveFailed() {
+      if (this.saveWarned) return;
+      this.saveWarned = true;
+      if (!this.on || !this.el || performance.now() < this.flashUntil) return;
+      this.flash("COULD NOT SAVE IN THE BROWSER", "SAVE YOUR LOOPS TO DISK", 3000);
     }
 
     serialize() {
@@ -1085,7 +1124,8 @@ window.RJ = window.RJ || {};
       }));
     }
 
-    deserialize(json) {
+    /** bad (opcional) recebe os indices das memorias que nao deu para ler. */
+    deserialize(json, bad) {
       const d = typeof json === "string" ? JSON.parse(json) : json;
       if (!d || d.format !== "rj42") throw new Error("Nao e uma memoria do RJ-42");
       const st = newState();
@@ -1098,10 +1138,13 @@ window.RJ = window.RJ || {};
       st.slots = new Array(SLOTS).fill(null).map((_, i) => {
         const x = d.slots && d.slots[i];
         if (!x || !x.pcm) return null;
-        const pcm = RJ.dsp.b64ToFloat(x.pcm);
-        const o = { name: cleanName(x.name), rate: x.rate, bpm: +x.bpm || 0, bars: x.bars | 0, song: x.song || "", pcm };
-        Object.defineProperty(o, "b64", { value: x.pcm, enumerable: false, writable: true });
-        return o;
+        // uma memoria estragada nao derruba as outras
+        try {
+          const pcm = RJ.dsp.b64ToFloat(x.pcm);
+          const o = { name: cleanName(x.name), rate: x.rate, bpm: +x.bpm || 0, bars: x.bars | 0, song: x.song || "", pcm };
+          Object.defineProperty(o, "b64", { value: x.pcm, enumerable: false, writable: true });
+          return o;
+        } catch (e) { console.warn("Memoria " + (i + 1) + " do RJ-42 ilegivel", e); if (bad) bad.push(i); return null; }
       });
       return st;
     }

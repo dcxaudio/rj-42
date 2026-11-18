@@ -4,6 +4,7 @@
 
 - Saturação de fita (`RJ.Tape`, que mora no dcx-core v1.1.0: `vendor/dcx-core/js/tape.js`) entre o Output e a saída: tanh com ADAA de 1ª ordem, pré e de-ênfase, perda de agudos e wow/flutter leve, num AudioWorklet. O Drive fica no menu TAPE do LCD (clique na linha de cima e gire o Search), salva com o resto e aprende MIDI. O padrão é OFF, e com ele o som sai igual, bit a bit.
 - As regras `.r9-*` do `css/rj42.css` ficam escopadas em `:where(.r42)` (mesma especificidade, o 42 não muda): no DCX Studio elas não vazam mais para o painel do RJ-950 (`#r9`).
+- Ligar não grava mais um 42 vazio por cima do salvo (P0-05, P0-06): o salvamento só fica liberado depois que a leitura dá certo (usa `getStrict` do dcx-core quando existe); uma memória estragada não derruba as outras, e o salvo ilegível é copiado para `autosave-bad` antes de qualquer gravação. Se o navegador não guardar, o visor avisa uma vez ("COULD NOT SAVE IN THE BROWSER"). `?v=` novo em `js/r42.js`.
 
 ## b0.1 (beta)
 
